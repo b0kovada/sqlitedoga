@@ -1,0 +1,27 @@
+import express from "express";
+import cors from "cors";
+import { initializeDB } from "./database.js";
+import booksRouter from "./routes/books.js";
+import swaggerUi from 'swagger-ui-express';
+import { readFile } from "fs/promises";
+
+const swaggerDocument = JSON.parse(await readFile(new URL("./swagger-output.json", import.meta.url)));
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use("/api/books", booksRouter);
+app.use("/swagger", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ message: err.message });
+});
+
+const startServer = async () => {
+    const port = 3000;
+    await initializeDB();
+    app.listen(port, () => console.log(`Server is running on port: ${port}`));
+};
+
+startServer();
